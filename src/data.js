@@ -1,4 +1,4 @@
-export const API_KEY = 'AIzaSyCPPfTwf1sYe_4mMlZPJ_Y3fDOJFQnhguo'
+export const API_KEY = process.env.REACT_APP_API_KEY;
 
 export const value_converter = (value) => {
     if(value >= 1000000) {
