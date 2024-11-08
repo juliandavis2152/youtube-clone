@@ -20,8 +20,24 @@ const Recommended = ({ categoryId }) => {
   return (
     <div className="recommended">
       {apiData.map((item, index) => {
+        // Check that required properties are available
+        const { snippet, statistics } = item;
+        if (
+          !snippet ||
+          !snippet.thumbnails ||
+          !snippet.thumbnails.medium ||
+          !statistics
+        ) {
+          console.warn("Skipping video due to missing data:", item);
+          return null; // Skip this item if any required data is missing
+        }
+
         return (
-          <Link to={`/video/${item.snippet.categoryId}/${item.id}`} key={index} className="side-video-list">
+          <Link
+            to={`/video/${item.snippet.categoryId}/${item.id}`}
+            key={index}
+            className="side-video-list"
+          >
             <img src={item.snippet.thumbnails.medium.url} alt="" />
             <div className="vid-info">
               <h4>{item.snippet.title}</h4>

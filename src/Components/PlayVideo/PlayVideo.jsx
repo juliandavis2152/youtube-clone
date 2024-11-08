@@ -9,11 +9,12 @@ import jack from "../../assets/jack.png";
 import user_profile from "../../assets/user_profile.jpg";
 import { API_KEY, value_converter } from "../../data";
 import moment from "moment";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const PlayVideo = () => {
 
   const {videoId} = useParams();
+  const history = useNavigate();
 
   const [apiData, setApiData] = useState(null);
   const [channelData, setChannelData] = useState(null);
@@ -27,23 +28,35 @@ const PlayVideo = () => {
       .then((data) => setApiData(data.items[0]));
   };
 
-  const fetchOtherData = async () => {
-    // Fetching Channel Data
-    const channelData_url = `https://youtube.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&id=${apiData.snippet.channelId}&key=${API_KEY}`;
-    await fetch(channelData_url)
-      .then((res) => res.json())
-      .then((data) => setChannelData(data.items[0]));
-
-    // Fetching Comment Data
-    const comment_url = `https://youtube.googleapis.com/youtube/v3/commentThreads?part=snippet%2Creplies&maxResults=50&videoId=${videoId}&key=${API_KEY}`;
-    await fetch(comment_url)
-      .then((res) => res.json())
-      .then((data) => setCommentData(data.items));
-  };
+    const fetchOtherData = async () => {
+      if (!apiData) return;
+    
+      try {
+        // Fetch Channel Data
+        const channelData_url = `https://youtube.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&id=${apiData.snippet.channelId}&key=${API_KEY}`;
+        const channelResponse = await fetch(channelData_url);
+        const channelDataResult = await channelResponse.json();
+        setChannelData(channelDataResult.items[0]);
+    
+        // Fetch Comment Data
+        const comment_url = `https://youtube.googleapis.com/youtube/v3/commentThreads?part=snippet%2Creplies&maxResults=50&videoId=${videoId}&key=${API_KEY}`;
+        const commentResponse = await fetch(comment_url);
+    
+        if (commentResponse.status === 403) {
+          console.error("Access to comment data is forbidden. Check your API key permissions.");
+          return; // Exit function if 403 error occurs
+        }
+    
+        const commentDataResult = await commentResponse.json();
+        setCommentData(commentDataResult.items || []);
+      } catch (error) {
+        console.error("Error fetching additional data:", error);
+      }
+    };
 
   useEffect(() => {
     fetchVideoData();
-  }, [videoId]);
+  }, [videoId, history]);
 
   useEffect(() => {
     fetchOtherData();
